@@ -3,24 +3,48 @@
 
 @using stec_util.Data.jira
 @inject IJiraService JiraService
-
+@*  *@
+<p>
+    <input @bind="_taskName"/>
+     <button @onclick="Find">Find</button>
+</p>
 @if (_name == null)
 {
     <p>
         <em>Loading...</em>
     </p>
-}else
+} else
 {
     <p>
-         @_name
+        @_name
     </p>
+    if (_services != null)
+    {
+        <ol>
+            @foreach (var service in _services)
+            {
+                <li>@service</li>
+            }
+        </ol>
+    }
 }
 
 @code {
-    private string? _name = null;
+    private string? _name;
+    private string? _taskName;
+    private IEnumerable<string>? _services;
 
-    protected override async Task OnInitializedAsync()
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     _name = await JiraService.GetTaskName("GPM-20305");
+    // }
+    //GPM-20536
+    private async Task Find()
     {
-        _name = await JiraService.GetTaskName("GPM-20305");
+        if (_taskName == null)
+            return;
+        _name = await JiraService.GetTaskName(_taskName);
+        _services = await JiraService.GetTaskServices(_taskName);
     }
+
 }

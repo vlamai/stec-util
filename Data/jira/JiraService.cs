@@ -13,7 +13,28 @@ public class JiraService : IJiraService
 
   public async Task<string> GetTaskName(string taskId)
   {
-    var issue = await _jira.Issues.GetIssueAsync(taskId);
-    return issue.Summary;
+    try
+    {
+      var cancellationToken = new CancellationTokenSource(2500);
+
+      var issue = await _jira.Issues.GetIssueAsync(taskId, cancellationToken.Token);
+      return issue != null ? issue.Summary : string.Empty;
+    } catch (Exception ex)
+    {
+      throw new Exception($"Error getting task name for {taskId}", ex);
+    }
+  }
+
+  public async Task<IEnumerable<string>> GetTaskServices(string taskId)
+  {
+    try
+    {
+      var issue = await _jira.Issues.GetIssueAsync(taskId);
+      var remoteLinks = await issue.GetRemoteLinksAsync();
+      return remoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]).Distinct();
+    } catch (Exception ex)
+    {
+      throw new Exception($"Error getting task services for {taskId}", ex);
+    }
   }
 }
