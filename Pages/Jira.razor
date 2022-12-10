@@ -5,8 +5,8 @@
 @inject IJiraService JiraService
 @*  *@
 <p>
-    <input @bind="_taskName"/>
-     <button @onclick="Find">Find</button>
+    <input @bind="_taskName" class="form-control"/>
+     <button @onclick="Find" class="btn btn-success">Find</button>
 </p>
 @if (_name == null)
 {
@@ -20,10 +20,10 @@
     </p>
     if (_services != null)
     {
-        <ol>
+        <ol  class="list-group list-group-numbered">
             @foreach (var service in _services)
             {
-                <li>@service</li>
+                <li  class="list-group-item">@service</li>
             }
         </ol>
     }
