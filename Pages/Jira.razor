@@ -1,0 +1,26 @@
+﻿@page "/Jira"
+<h3>Jira</h3>
+
+@using stec_util.Data.jira
+@inject IJiraService JiraService
+
+@if (_name == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}else
+{
+    <p>
+         @_name
+    </p>
+}
+
+@code {
+    private string? _name = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _name = await JiraService.GetTaskName("GPM-20305");
+    }
+}
