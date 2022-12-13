@@ -16,7 +16,7 @@ public class JiraService : IJiraService
   {
     try
     {
-      var cancellationToken = new CancellationTokenSource(2500);
+      var cancellationToken = new CancellationTokenSource(180000);
 
       var issue = await _jira.Issues.GetIssueAsync(taskId, cancellationToken.Token);
       return issue != null ? issue.Summary : string.Empty;
@@ -30,8 +30,9 @@ public class JiraService : IJiraService
   {
     try
     {
-      var issue = await _jira.Issues.GetIssueAsync(taskId);
-      var remoteLinks = await issue.GetRemoteLinksAsync();
+      var cancellationToken = new CancellationTokenSource(180000);
+      var issue = await _jira.Issues.GetIssueAsync(taskId, cancellationToken.Token);
+      var remoteLinks = await issue.GetRemoteLinksAsync(cancellationToken.Token);
       return remoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]).Distinct();
     } catch (Exception ex)
     {
@@ -43,23 +44,23 @@ public class JiraService : IJiraService
   {
     try
     {
-      // var cancellationToken = new CancellationTokenSource(2500);
+      var cancellationToken = new CancellationTokenSource(180000);
       fixVersion = "3.33.0";
       var result = new List<IssueDto>();
-      var issues = await _jira.Issues.GetIssuesFromJqlAsync($"project = GPM AND fixVersion = {fixVersion}", maxIssues: 100);
+      var issues = await _jira.Issues.GetIssuesFromJqlAsync($"project = GPM AND fixVersion = {fixVersion}", maxIssues: 10, token: cancellationToken.Token);
       foreach (var issue in issues)
       {
-        var remoteLinks = await issue.GetRemoteLinksAsync();
+        var remoteLinks = await issue.GetRemoteLinksAsync(cancellationToken.Token);
         var services = remoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]).Distinct();
         result.Add(new IssueDto(issue,services));
         
-        var subTasks = await issue.GetSubTasksAsync();
-        foreach (var subTask in subTasks)
-        {
-          var subRemoteLinks = await subTask.GetRemoteLinksAsync();
-          var subServices = subRemoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]).Distinct();
-          result.Add(new IssueDto(subTask,subServices,"---    "));
-        }
+        // var subTasks = await issue.GetSubTasksAsync();
+        // foreach (var subTask in subTasks)
+        // {
+        //   var subRemoteLinks = await subTask.GetRemoteLinksAsync();
+        //   var subServices = subRemoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]).Distinct();
+        //   result.Add(new IssueDto(subTask,subServices,"---    "));
+        // }
       }
 
       return result;
