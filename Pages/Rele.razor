@@ -3,7 +3,17 @@
 @using stec_util.Data.jira.Dto
 @inject IJiraService JiraService
 
-<h3>Rele</h3>
+<h3>Release</h3>
+<select class="form-select" @bind="SelectedVersion">
+    <option></option>
+    @foreach (var version in _versions)
+    {
+        <option value="@version">@version</option>
+    }
+</select>
+
+<button @onclick="Find" class="btn btn-success">Find</button>
+
 @if (_loading)
 {
     <div class="d-flex justify-content-center">
@@ -29,30 +39,55 @@
         <tr>
             <td>@dto.Type</td>
             <td>@dto.Key</td>
-            <td><a href="https://jira.stecpoint.ru/browse/@dto.Key">@dto.Summary</a></td>
+            <td>
+                <a href="https://jira.stecpoint.ru/browse/@dto.Key">@dto.Summary</a>
+            </td>
             <td>@dto.Assignee</td>
             <td>
-                <ol class="list-group list-group-numbered">
+                <ul class="list-group">
                     @foreach (var service in dto.Services)
                     {
                         <li class="list-group-item">@service</li>
                     }
-                </ol>
+                </ul>
             </td>
         </tr>
     }
     </tbody>
 </table>
-
+<h3>Полный список сервисов</h3>
+<ul class="list-group">
+    @foreach (var service in _allServices)
+    {
+        <li class="list-group-item">@service</li>
+    }
+</ul>
 
 @code {
     private IEnumerable<IssueDto> _dtos = new List<IssueDto>();
     private bool _loading = true;
+    private IEnumerable<string> _allServices = new List<string>();
+    private IEnumerable<string> _versions = new List<string>();
+    private string? SelectedVersion { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        _dtos = await JiraService.GetReleaseIssues("GPM-20305");
+        _versions = await JiraService.GetReleaseVersions();
         _loading = false;
+    }
+
+    private async Task Find()
+    {
+        if (SelectedVersion == null)
+        {
+            return;
+        }
+        _dtos = new List<IssueDto>();
+        _allServices = new List<string>();
+        _loading = true;
+        _dtos = await JiraService.GetReleaseIssues(SelectedVersion);
+        _loading = false;
+        _allServices = _dtos.SelectMany(x => x.Services).Distinct().OrderBy(q => q);
     }
 
 }

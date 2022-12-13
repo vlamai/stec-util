@@ -45,29 +45,56 @@ public class JiraService : IJiraService
     try
     {
       var cancellationToken = new CancellationTokenSource(180000);
-      fixVersion = "3.33.0";
+      // fixVersion = "3.32.0";
       var result = new List<IssueDto>();
-      var issues = await _jira.Issues.GetIssuesFromJqlAsync($"project = GPM AND fixVersion = {fixVersion}", maxIssues: 10, token: cancellationToken.Token);
+
+      var jql = $"project = GPM AND fixVersion = {fixVersion} AND type not in (subTaskIssueTypes())";
+      var q = new IssueSearchOptions(jql)
+      {
+        MaxIssuesPerRequest = 1000, FetchBasicFields = true,
+      };
+
+      var issues = await _jira.Issues.GetIssuesFromJqlAsync(q, token: cancellationToken.Token);
       foreach (var issue in issues)
       {
         var remoteLinks = await issue.GetRemoteLinksAsync(cancellationToken.Token);
-        var services = remoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]).Distinct();
-        result.Add(new IssueDto(issue,services));
-        
-        // var subTasks = await issue.GetSubTasksAsync();
-        // foreach (var subTask in subTasks)
-        // {
-        //   var subRemoteLinks = await subTask.GetRemoteLinksAsync();
-        //   var subServices = subRemoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]).Distinct();
-        //   result.Add(new IssueDto(subTask,subServices,"---    "));
-        // }
+        var services = remoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]).ToList();
+        var subTasks = await issue.GetSubTasksAsync();
+        foreach (var subTask in subTasks)
+        {
+          var subRemoteLinks = await subTask.GetRemoteLinksAsync();
+          var subServices = subRemoteLinks.Select(x => x.RemoteUrl.Split("/-/")[0]);
+          services.AddRange(subServices);
+        }
+
+        var allServices = services.Where(x => x.StartsWith("https://gitlab"))
+          .Select(x => x.Split("/").Last())
+          .ToList()
+          .Distinct();
+
+        result.Add(new IssueDto(issue, allServices));
       }
 
-      return result;
+      return result.DistinctBy(x => x.Key);
     } catch (Exception ex)
     {
       Console.WriteLine(ex);
       throw;
+    }
+  }
+
+  public async Task<IEnumerable<string>> GetReleaseVersions()
+  {
+    try
+    {
+      var cancellationToken = new CancellationTokenSource(180000);
+      var project = await _jira.Projects.GetProjectAsync("GPM", cancellationToken.Token);
+      var versions = await project.GetVersionsAsync(cancellationToken.Token);
+      return versions.Where(x => x.IsReleased == false && x.IsArchived == false).Select(x => x.Name)
+        .OrderBy(q => q);
+    } catch (Exception ex)
+    {
+      throw new Exception("Error getting release versions", ex);
     }
   }
 }

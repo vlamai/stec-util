@@ -8,20 +8,14 @@ public class IssueDto
     {
         Services = services;
         Key = issue.Key.Value;
-        if (prefix != null)
-        {
-            Summary = prefix + issue.Summary;
-        }else
-        {
-            Summary = issue.Summary;
-        }
+        Summary = prefix != null ? prefix + issue.Summary : issue.Summary;
         Type = issue.Type.Name;
         Assignee = issue.AssigneeUser.DisplayName;
     }
-    public string Key { get; set; }
-    public string Type { get; set; }
-    public string Summary { get; set; }
-    public IEnumerable<string> Services { get; set; }
-    public string Assignee { get; set; }
+    public string Key { get; }
+    public string Type { get; }
+    public string Summary { get; }
+    public IEnumerable<string> Services { get; }
+    public string Assignee { get; }
 
 }

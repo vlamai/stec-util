@@ -9,4 +9,6 @@ public interface IJiraService
   public Task<IEnumerable<string>> GetTaskServices(string taskId);
   
   public Task<IEnumerable<IssueDto>> GetReleaseIssues(string fixVersion);
+  
+  public Task<IEnumerable<string>> GetReleaseVersions();
 }
