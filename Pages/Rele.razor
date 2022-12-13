@@ -34,7 +34,7 @@
     </tr>
     </thead>
     <tbody>
-    @foreach (var dto in _dtos)
+    @foreach (var dto in _dtos.OrderBy(x => x.Key))
     {
         <tr>
             <td>@dto.Type</td>
