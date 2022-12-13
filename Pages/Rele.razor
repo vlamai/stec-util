@@ -1,0 +1,48 @@
+﻿@page "/Rele"
+@using stec_util.Data.jira
+@using stec_util.Data.jira.Dto
+@inject IJiraService JiraService
+
+<h3>Rele</h3>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Type</th>
+        <th>Key</th>
+        <th>Summary</th>
+        <th>Assignee</th>
+        <th>Services</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var dto in _dtos)
+    {
+        <tr>
+            <td>@dto.Type</td>
+            <td>@dto.Key</td>
+            <td><a href="https://jira.stecpoint.ru/browse/@dto.Key">@dto.Summary</a></td>
+            <td>@dto.Assignee</td>
+            <td>
+                <ol class="list-group list-group-numbered">
+                    @foreach (var service in dto.Services)
+                    {
+                        <li class="list-group-item">@service</li>
+                    }
+                </ol>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+
+@code {
+    private IEnumerable<IssueDto> _dtos = new List<IssueDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _dtos = await JiraService.GetReleaseIssues("GPM-20305");
+    }
+
+}
