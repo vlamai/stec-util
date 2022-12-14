@@ -6,25 +6,31 @@
 
 
 <h3>Release</h3>
-<div class="row">
-    <div class="col-md-12 d-flex justify-content-left">
-        <div class="text-bg-secondary p-3">
-            <p>@_pageState.Message</p>
-        </div>
-    </div>
+
+
+<div class="card col-md-12 d-flex justify-content-left" style="background-color: whitesmoke; color: darkgray">
+
+    <p class="card-text">@_pageState.Message</p>
+
 </div>
 
 
-<select class="form-select" @bind="SelectedVersion">
-    <option></option>
-    @foreach (var version in _versions)
-    {
-        <option value="@version">@version</option>
-    }
-</select>
+<div class="row">
+    <div class="input-group mb-2">
+        @if (_pageState.Loading == false)
+        {
+            <button @onclick="Find" class="btn btn-outline-success" type="button" id="button-addon2">Find</button>
+        }
+        <select class="form-select" @bind="SelectedVersion" aria-describedby="button-addon2">
+            <option></option>
+            @foreach (var version in _versions)
+            {
+                <option value="@version">@version</option>
+            }
+        </select>
 
-<button @onclick="Find" class="btn btn-success">Find</button>
-
+    </div>
+</div>
 <table class="table table-striped">
     <thead>
     <tr>
@@ -101,9 +107,9 @@
 
         _pageState.StartLoading();
         var dtos = await JiraService.GetReleaseIssues(SelectedVersion);
-        
+
         _dtos.AddRange(dtos);
-        
+
         _pageState.StopLoading();
         await GetServices();
     // _allServices = _dtos.SelectMany(x => x.Services).Distinct().OrderBy(q => q);
@@ -112,13 +118,15 @@
     private async Task GetServices()
     {
         _pageState.StartLoading();
+        var i = 0;
         foreach (var issueDto in _dtos)
         {
-            _pageState.SetMessage($"Получение сервисов для {issueDto.Key} {issueDto.Summary}");
+            i++;
+            _pageState.SetMessage($"[{i}|{_dtos.Count}]Получение сервисов для {issueDto.Key}");
             StateHasChanged();
             var services = await JiraService.GetTaskWithSubTasksServices(issueDto.Key);
             var dtoServices = services.ToList();
-            
+
             issueDto.Services = dtoServices;
             _allServices.AddRange(dtoServices);
             _allServices = _allServices.Distinct().OrderBy(q => q).ToList();
