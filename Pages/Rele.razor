@@ -1,9 +1,20 @@
 ﻿@page "/Rele"
 @using stec_util.Data.jira
 @using stec_util.Data.jira.Dto
+@using stec_util.Data
 @inject IJiraService JiraService
 
+
 <h3>Release</h3>
+<div class="row">
+    <div class="col-md-12 d-flex justify-content-left">
+        <div class="text-bg-secondary p-3">
+            <p>@_pageState.Message</p>
+        </div>
+    </div>
+</div>
+
+
 <select class="form-select" @bind="SelectedVersion">
     <option></option>
     @foreach (var version in _versions)
@@ -13,15 +24,6 @@
 </select>
 
 <button @onclick="Find" class="btn btn-success">Find</button>
-
-@if (_loading)
-{
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
-}
 
 <table class="table table-striped">
     <thead>
@@ -45,9 +47,12 @@
             <td>@dto.Assignee</td>
             <td>
                 <ul class="list-group">
-                    @foreach (var service in dto.Services)
+                    @if (dto.Services != null)
                     {
-                        <li class="list-group-item">@service</li>
+                        foreach (var service in dto.Services)
+                        {
+                            <li class="list-group-item">@service</li>
+                        }
                     }
                 </ul>
             </td>
@@ -64,16 +69,25 @@
 </ul>
 
 @code {
-    private IEnumerable<IssueDto> _dtos = new List<IssueDto>();
-    private bool _loading = true;
-    private IEnumerable<string> _allServices = new List<string>();
+    private PageSate _pageState;
+
+    private List<IssueDto> _dtos;
+    private List<string> _allServices;
     private IEnumerable<string> _versions = new List<string>();
+
+    public Rele()
+    {
+        _pageState = new PageSate();
+        _dtos = new List<IssueDto>();
+        _allServices = new List<string>();
+    }
+
     private string? SelectedVersion { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         _versions = await JiraService.GetReleaseVersions();
-        _loading = false;
+        _pageState.StopLoading();
     }
 
     private async Task Find()
@@ -84,10 +98,32 @@
         }
         _dtos = new List<IssueDto>();
         _allServices = new List<string>();
-        _loading = true;
-        _dtos = await JiraService.GetReleaseIssues(SelectedVersion);
-        _loading = false;
-        _allServices = _dtos.SelectMany(x => x.Services).Distinct().OrderBy(q => q);
+
+        _pageState.StartLoading();
+        var dtos = await JiraService.GetReleaseIssues(SelectedVersion);
+        
+        _dtos.AddRange(dtos);
+        
+        _pageState.StopLoading();
+        await GetServices();
+    // _allServices = _dtos.SelectMany(x => x.Services).Distinct().OrderBy(q => q);
+    }
+
+    private async Task GetServices()
+    {
+        _pageState.StartLoading();
+        foreach (var issueDto in _dtos)
+        {
+            _pageState.SetMessage($"Получение сервисов для {issueDto.Key} {issueDto.Summary}");
+            StateHasChanged();
+            var services = await JiraService.GetTaskWithSubTasksServices(issueDto.Key);
+            var dtoServices = services.ToList();
+            
+            issueDto.Services = dtoServices;
+            _allServices.AddRange(dtoServices);
+            _allServices = _allServices.Distinct().OrderBy(q => q).ToList();
+        }
+        _pageState.StopLoading();
     }
 
 }

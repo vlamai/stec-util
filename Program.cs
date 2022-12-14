@@ -4,13 +4,15 @@ using stec_util.Data;
 using stec_util.Data.jira;
 
 var builder = WebApplication.CreateBuilder(args);
-
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 //Add configuration
 builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddSingleton<ILoggerFactory,LoggerFactory>();
+
+
 builder.Services.AddScoped<IJiraService, JiraService>(x =>
 {
   var config = x.GetRequiredService<IConfiguration>();
