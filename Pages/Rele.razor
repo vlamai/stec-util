@@ -31,48 +31,53 @@
 
     </div>
 </div>
-<table class="table table-striped">
-    <thead>
-    <tr>
-        <th>Type</th>
-        <th>Key</th>
-        <th>Summary</th>
-        <th>Assignee</th>
-        <th>Services</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var dto in _dtos.OrderBy(x => x.Key))
-    {
+
+@if (_dtos.Count > 0)
+{
+    <table class="table table-striped">
+        <thead>
         <tr>
-            <td>@dto.Type</td>
-            <td>@dto.Key</td>
-            <td>
-                <a href="https://jira.stecpoint.ru/browse/@dto.Key">@dto.Summary</a>
-            </td>
-            <td>@dto.Assignee</td>
-            <td>
-                <ul class="list-group">
-                    @if (dto.Services != null)
-                    {
-                        foreach (var service in dto.Services)
-                        {
-                            <li class="list-group-item">@service</li>
-                        }
-                    }
-                </ul>
-            </td>
+            <th>Type</th>
+            <th>Key</th>
+            <th>Summary</th>
+            <th>Assignee</th>
+            <th>Services</th>
         </tr>
-    }
-    </tbody>
-</table>
-<h3>Полный список сервисов</h3>
-<ul class="list-group">
-    @foreach (var service in _allServices)
-    {
-        <li class="list-group-item">@service</li>
-    }
-</ul>
+        </thead>
+        <tbody>
+        @foreach (var dto in _dtos.OrderBy(x => x.Key))
+        {
+            <tr>
+                <td>@dto.Type</td>
+                <td>@dto.Key</td>
+                <td>
+                    <a href="https://jira.stecpoint.ru/browse/@dto.Key">@dto.Summary</a>
+                </td>
+                <td>@dto.Assignee</td>
+                <td>
+                    <ul class="list-group">
+                        @if (dto.Services != null)
+                        {
+                            foreach (var service in dto.Services)
+                            {
+                                <li class="list-group-item">@service</li>
+                            }
+                        }
+                    </ul>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <h3>Полный список сервисов | @_allServices.Count |</h3>
+    <ul class="list-group">
+        @foreach (var service in _allServices)
+        {
+            <li class="list-group-item">@service</li>
+        }
+    </ul>
+}
+
 
 @code {
     private PageSate _pageState;
